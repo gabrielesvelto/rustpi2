@@ -14,7 +14,7 @@ The build script downloads packages for an up to date Raspian jessie distributio
 
 ## Usage
 
-This script depends on having the usual dev tools installed: git, curl, etc. It doesn't try to check if they are installed. You've been warned ;)
+This script depends on having the usual dev tools installed: git, curl, etc. It doesn't try to check if they are installed. You've been warned!
 
 Run the `./build_toolchain.sh` command. It takes a single argument which is the path to the directory where the toolchain will be created. You need to have the permissions to create this directory.
 
