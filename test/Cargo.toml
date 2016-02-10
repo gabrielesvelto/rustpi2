@@ -1,0 +1,7 @@
+[package]
+name = "openssl-test"
+version = "0.1.0"
+authors = ["fabrice <fabrice@desre.org>"]
+
+[dependencies]
+openssl="*"
