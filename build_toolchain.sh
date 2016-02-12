@@ -9,6 +9,9 @@ then
   exit
 fi
 
+# Make crosstool-NG happy
+unset LD_LIBRARY_PATH
+
 # Downloads a deb file if we don't have a local version already.
 function get_deb {
   if [ ! -f $HERE/deps/$2.deb ];
@@ -19,7 +22,7 @@ function get_deb {
 }
 
 # Update a repository if needed. Returns whether an update occured.
-# call with : update_repo name url
+# call with : update_repo name url revision
 function update_repo {
   NAME=$1
   URL=$2
@@ -29,6 +32,8 @@ function update_repo {
   else
     git clone --recursive $URL deps/$NAME
   fi
+  cd $HERE/deps/$NAME
+  git checkout $3 .
   cd $HERE
 
   if [ -f ./deps/$NAME-commit ];
@@ -61,7 +66,7 @@ TARGET=armv7-unknown-linux-gnueabihf
 
 # Clone and build crosstool-ng
 
-update_repo crosstool-ng https://github.com/crosstool-ng/crosstool-ng.git
+update_repo crosstool-ng https://github.com/crosstool-ng/crosstool-ng.git HEAD
 
 if [ $? -eq 1 ];
 then
@@ -69,12 +74,13 @@ then
   cd $HERE
 
   ct-ng build
+  cat build.log
   rm build.log
 fi
 
 # Clone and build Rust
 
-update_repo rust https://github.com/rust-lang/rust.git
+update_repo rust https://github.com/rust-lang/rust.git f5f8e0bfbeee2abc425f26a3ad36430f23010e69 
 
 if [ $? -eq 1 ];
 then
@@ -83,6 +89,9 @@ then
 fi
 
 # Clone and build cargo
+
+# Update PATH to get rustc
+export PATH=$DEST_DIR/bin:$DEST_DIR/x-tools/bin:$PATH
 
 update_repo cargo https://github.com/rust-lang/cargo.git
 
@@ -96,6 +105,7 @@ fi
 
 get_deb o/openssl libssl-dev_1.0.1k-3+deb8u2_armhf
 get_deb o/openssl libssl1.0.0_1.0.1k-3+deb8u2_armhf
+get_deb s/sqlite3 libsqlite3-dev_3.8.7.1-1+deb8u1_armhf
 get_deb z/zlib zlib1g_1.2.8.dfsg-2+b1_armhf
 get_deb z/zlib zlib1g-dev_1.2.8.dfsg-2+b1_armhf
 
@@ -178,7 +188,6 @@ echo "=================================================================="
 
 # Check that we can compile and link a simple test program.
 
-export PATH=$DEST_DIR/bin:$DEST_DIR/x-tools/bin:$PATH
 export LD_LIBRARY_PATH=$DEST_DIR/lib:$LD_LIBRARY_PATH
 export OPENSSL_LIB_DIR=$SYSROOT/usr/lib/arm-linux-gnueabihf/
 export TARGET_CFLAGS="-I $SYSROOT/usr/include/arm-linux-gnueabihf"
@@ -194,3 +203,5 @@ then
 fi
 
 cd $HERE
+
+tar czf toolchain.tar.gz $DEST_DIR

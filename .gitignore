@@ -4,3 +4,4 @@ test/target
 build.log
 .config.2
 rustpi-env.sh
+toolchain.tar.gz
