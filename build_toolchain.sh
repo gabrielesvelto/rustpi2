@@ -103,6 +103,10 @@ fi
 
 # Download additional deb packages and patch the toolchain's sysroot.
 
+get_deb a/avahi libavahi-client-dev_0.6.31-5_armhf
+get_deb a/avahi libavahi-common-dev_0.6.31-5_armhf
+get_deb a/avahi libavahi-common3_0.6.31-5_armhf
+get_deb d/dbus libdbus-1-dev_1.8.20-0+deb8u1_armhf
 get_deb o/openssl libssl-dev_1.0.1k-3+deb8u2_armhf
 get_deb o/openssl libssl1.0.0_1.0.1k-3+deb8u2_armhf
 get_deb s/sqlite3 libsqlite3-dev_3.8.7.1-1+deb8u1_armhf
