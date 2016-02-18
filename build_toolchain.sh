@@ -80,7 +80,7 @@ fi
 
 # Clone and build Rust
 
-update_repo rust https://github.com/rust-lang/rust.git f5f8e0bfbeee2abc425f26a3ad36430f23010e69 
+update_repo rust https://github.com/rust-lang/rust.git fae516277b6da46b6c1cf568765c90fad2f9ae4b #f5f8e0bfbeee2abc425f26a3ad36430f23010e69 
 
 if [ $? -eq 1 ];
 then
