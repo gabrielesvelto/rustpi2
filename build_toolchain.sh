@@ -1,5 +1,21 @@
 #!/bin/bash
 
+# Check that all the required programs are installed
+function check_programs {
+  programs="cargo curl dpkg-deb git make"
+
+  for i in $programs; do
+    which $i 1>/dev/null 2>/dev/null
+
+    if [ $? -ne 0 ]; then
+        printf "error: $i not found, install it before running this script\n"
+        exit 1;
+    fi
+  done
+}
+
+check_programs
+
 # Builds a full cross compiling toolchain for Rust armv7 targets like the
 # Raspberry Pi 2, with support for programs using openssl.
 
@@ -17,8 +33,9 @@ function get_deb {
   if [ ! -f $HERE/deps/$2.deb ];
   then
     curl http://archive.raspbian.org/raspbian/pool/main/$1/$2.deb -o $HERE/deps/$2.deb
-    dpkg-deb -x $HERE/deps/$2.deb $HERE/deps/deb
   fi
+
+  dpkg-deb -x $HERE/deps/$2.deb $HERE/deps/deb
 }
 
 # Update a repository if needed. Returns whether an update occured.
