@@ -83,8 +83,8 @@ function check_programs {
   done
 }
 
-# Builds a full cross compiling toolchain for Rust armv7 targets like the
-# Raspberry Pi 2, with support for programs using openssl.
+# Builds a full cross compiling toolchain for Rust MIPS 32-bit targets like the
+# Creator Ci20, with support for programs using openssl.
 
 parse_args "$@"
 check_programs
@@ -101,8 +101,9 @@ unset LD_LIBRARY_PATH
 function get_deb {
   if [ ! -f $HERE/deps/$2.deb ];
   then
-    echo "Downloading package from http://archive.raspian.org/raspbian/pool/main/$1/$2.deb"
-    curl https://archive.raspbian.org/raspbian/pool/main/$1/$2.deb -o $HERE/deps/$2.deb
+    pkg_url=http://ftp.nl.debian.org/debian/pool/main
+    printf "Downloading package from ${pkg_url}/$1/$2.deb\n"
+    curl ${pkg_url}/$1/$2.deb -o $HERE/deps/$2.deb
   fi
 
   dpkg-deb -x $HERE/deps/$2.deb $HERE/deps/deb
@@ -151,7 +152,7 @@ mkdir -p $DEST_DIR
 
 export PATH=$DEST_DIR/bin:$DEST_DIR/x-tools/bin:$PATH
 
-TARGET=armv7-unknown-linux-gnueabihf
+TARGET=mipsel-unknown-linux-gnu
 
 # Clone and build crosstool-ng
 
@@ -197,25 +198,27 @@ OUR_CONTEXT=""
 
 # Download additional deb packages and patch the toolchain's sysroot.
 
-get_deb a/alsa-lib libasound2_1.0.28-1_armhf
-get_deb a/avahi libavahi-client-dev_0.6.31-5_armhf
-get_deb a/avahi libavahi-common-dev_0.6.31-5_armhf
-get_deb a/avahi libavahi-common3_0.6.31-5_armhf
-get_deb d/dbus libdbus-1-dev_1.8.20-0+deb8u1_armhf
-get_deb e/espeak libespeak-dev_1.48.04+dfsg-1_armhf
-get_deb j/jackd2 libjack-jackd2-0_1.9.10+20140719git3eb0ae6a~dfsg-2_armhf
-get_deb o/openssl libssl-dev_1.0.1k-3+deb8u4_armhf
-get_deb o/openssl libssl1.0.0_1.0.1k-3+deb8u4_armhf
-get_deb p/portaudio19 libportaudio2_19+svn20140130-1_armhf 
-get_deb s/sonic libsonic0_0.1.17-1.1_armhf
-get_deb s/sqlite3 libsqlite3-dev_3.8.7.1-1+deb8u1_armhf
-get_deb z/zlib zlib1g_1.2.8.dfsg-2+b1_armhf
-get_deb z/zlib zlib1g-dev_1.2.8.dfsg-2+b1_armhf
-get_deb libu/libupnp libupnp6-dev_1.6.19+git20141001-1_armhf
+get_deb a/alsa-lib libasound2_1.0.28-1_mipsel
+get_deb a/avahi libavahi-client-dev_0.6.31-5_mipsel
+get_deb a/avahi libavahi-common3_0.6.31-5_mipsel
+get_deb a/avahi libavahi-common-dev_0.6.31-5_mipsel
+get_deb d/dbus libdbus-1-dev_1.8.20-0+deb8u1_mipsel
+get_deb e/espeak libespeak-dev_1.48.04+dfsg-1_mipsel
+get_deb j/jackd2 libjack-jackd2-0_1.9.10+20140719git3eb0ae6a~dfsg-2_mipsel
+get_deb libu/libupnp libupnp6_1.6.19+git20141001-1_mipsel
+get_deb libu/libupnp libupnp6-dev_1.6.19+git20141001-1_mipsel
 get_deb libu/libupnp libupnp-dev_1.6.19+git20141001-1_all
-get_deb libu/libupnp libupnp6_1.6.19+git20141001-1_armhf
+get_deb o/openssl libssl1.0.0_1.0.1k-3+deb8u4_mipsel
+get_deb o/openssl libssl-dev_1.0.1k-3+deb8u4_mipsel
+get_deb p/portaudio19 libportaudio2_19+svn20140130-1_mipsel
+get_deb s/sonic libsonic0_0.1.17-1.1_mipsel
+get_deb s/sqlite3 libsqlite3-dev_3.8.7.1-1+deb8u1_mipsel
+get_deb s/systemd libudev1_215-17+deb8u4_mipsel
+get_deb s/systemd libudev-dev_215-17+deb8u4_mipsel
+get_deb z/zlib zlib1g_1.2.8.dfsg-2+b1_mipsel
+get_deb z/zlib zlib1g-dev_1.2.8.dfsg-2+b1_mipsel
 
-DEB_LIBS=deps/deb/usr/lib/arm-linux-gnueabihf
+DEB_LIBS=deps/deb/usr/lib/mipsel-linux-gnu
 
 # Hack to get libespeak dependencies available.
 cp $DEB_LIBS/libsonic.so.0 $DEB_LIBS/libsonic.so
@@ -224,9 +227,9 @@ cp $DEB_LIBS/libjack.so.0.1.0 $DEB_LIBS/libjack.so
 cp $DEB_LIBS/libasound.so.2.0.0 $DEB_LIBS/libasound.so
 
 # We build libopenzwave ourselves and put the .so with the packaged libraries.
-curl https://people.mozilla.org/~fdesre/link-packages/libopenzwave.so > deps/deb/lib/arm-linux-gnueabihf/libopenzwave.so
+curl https://people.mozilla.org/~gsvelto/link-packages/libopenzwave.so > deps/deb/lib/mipsel-linux-gnu/libopenzwave.so
 
-SYSROOT=$DEST_DIR/x-tools/arm-unknown-linux-gnueabihf/sysroot
+SYSROOT=$DEST_DIR/x-tools/mipsel-unknown-linux-gnu/sysroot
 chmod u+w $SYSROOT
 chmod u+w $SYSROOT/lib
 chmod u+w $SYSROOT/usr
@@ -246,12 +249,12 @@ chmod u-w $SYSROOT
 
 # Adding the custom linker
 
-cat > $DEST_DIR/bin/rustpi-linker <<EOF
+cat > $DEST_DIR/bin/rustci20-linker <<EOF
 #!/bin/bash
-arm-linux-gnueabihf-gcc --sysroot=$SYSROOT -L $SYSROOT/usr/lib/arm-linux-gnueabihf -l ixml -l threadutil -l sonic -l portaudio -l jack -l asound "\$@"
+mipsel-linux-gnu-gcc --sysroot=$SYSROOT -L $SYSROOT/usr/lib/mipsel-linux-gnu -l ixml -l threadutil -l sonic -l portaudio -l jack -l asound "\$@"
 EOF
 
-chmod u+x $DEST_DIR/bin/rustpi-linker
+chmod u+x $DEST_DIR/bin/rustci20-linker
 
 # If the user has no .cargo/config file, create one. If not, prompt before adding.
 # Should be replaced by something a bit more clever that actually parses the
@@ -261,7 +264,7 @@ function create_cargo_config() {
   mkdir -p $HOME/.cargo
   cat > $HOME/.cargo/config <<EOF
 [target.$TARGET]
-linker = "rustpi-linker"
+linker = "rustci20-linker"
 EOF
 }
 
@@ -269,7 +272,7 @@ if [ ! -f $HOME/.cargo/config ];
 then
   create_cargo_config
 else
-  LINKER=$(grep rustpi-linker $HOME/.cargo/config)
+  LINKER=$(grep rustci20-linker $HOME/.cargo/config)
   if [ "$LINKER" == "" ];
   then
     echo "No linker found in your .cargo/config!"
@@ -286,28 +289,28 @@ else
   done
 fi
 
-cp cargopi $DEST_DIR/bin
+cp cargoci20 $DEST_DIR/bin
 
 # Help people setup their environment. This creates a script to source before
 # compiling.
 
-cat > rustpi-env.sh <<EOF
+cat > rustci20-env.sh <<EOF
 #!/bin/bash
 export PATH=$DEST_DIR/bin:$DEST_DIR/x-tools/bin:\$PATH
 export LD_LIBRARY_PATH=$DEST_DIR/lib:\$LD_LIBRARY_PATH
-export OPENSSL_LIB_DIR=$SYSROOT/usr/lib/arm-linux-gnueabihf/
-export TARGET_CFLAGS="-I $SYSROOT/usr/include/arm-linux-gnueabihf"
+export OPENSSL_LIB_DIR=$SYSROOT/usr/lib/mipsel-linux-gnu/
+export TARGET_CFLAGS="-I $SYSROOT/usr/include/mipsel-linux-gnu"
 EOF
 
-echo "=================================================================="
-echo " Run source ./rustpi-env.sh to setup your compilation environment."
-echo "=================================================================="
+echo "===================================================================="
+echo " Run source ./rustci20-env.sh to setup your compilation environment."
+echo "===================================================================="
 
 # Check that we can compile and link a simple test program.
 
 export LD_LIBRARY_PATH=$DEST_DIR/lib:$LD_LIBRARY_PATH
-export OPENSSL_LIB_DIR=$SYSROOT/usr/lib/arm-linux-gnueabihf/
-export TARGET_CFLAGS="-I $SYSROOT/usr/include/arm-linux-gnueabihf"
+export OPENSSL_LIB_DIR=$SYSROOT/usr/lib/mipsel-linux-gnu/
+export TARGET_CFLAGS="-I $SYSROOT/usr/include/mipsel-linux-gnu"
 
 pushd test
 cargo clean
