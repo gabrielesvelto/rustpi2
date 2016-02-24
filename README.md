@@ -12,9 +12,15 @@ This has only been tested on Ubuntu 15.10 so far. If you use it successfully on 
 
 The build script downloads packages for an up to date Raspian jessie distribution. This matters for openssl linkage only.
 
-## Usage
+## Required dependencies
 
-This script depends on having the usual dev tools installed: git, curl, etc. It doesn't try to check if they are installed. You've been warned!
+This script depends on having the usual dev tools installed. It doesn't try to check if they are all installed. You've been warned!
+
+### Fedora
+
+Make sure you have the package glibc-static installed for libc.a.
+
+## Usage
 
 Run the `./build_toolchain.sh` command. It takes a single argument which is the path to the directory where the toolchain will be created. You need to have the permissions to create this directory.
 
