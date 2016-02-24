@@ -1,5 +1,16 @@
 #!/bin/bash
 
+OUR_CONTEXT=""
+
+function cleanup {
+    if [ ! -z $OUR_CONTEXT ];
+    then
+        printf "Removing: $OUR_CONTEXT\n"
+        rm -f $HERE/deps/$OUR_CONTEXT
+    fi
+}
+trap cleanup EXIT
+
 # Check that all the required programs are installed
 function check_programs {
   programs="cargo curl dpkg-deb git make"
@@ -45,13 +56,13 @@ function update_repo {
   URL=$2
   if [ -d ./deps/$NAME ];
   then
-    cd ./deps/$NAME && git pull
+    (cd ./deps/$NAME && git pull)
   else
     git clone --recursive $URL deps/$NAME
   fi
-  cd $HERE/deps/$NAME
+  pushd $HERE/deps/$NAME
   git checkout $3 .
-  cd $HERE
+  popd
 
   if [ -f ./deps/$NAME-commit ];
   then
@@ -62,6 +73,8 @@ function update_repo {
 
   NEW_COMMIT=`git --git-dir=./deps/$NAME/.git log -1 --format=%H HEAD`
   echo $NEW_COMMIT > ./deps/$NAME-commit
+
+  OUR_CONTEXT="$NAME-commit"
 
   if [ "$CURRENT_COMMIT" != "$NEW_COMMIT" ];
   then
@@ -87,13 +100,14 @@ update_repo crosstool-ng https://github.com/crosstool-ng/crosstool-ng.git HEAD
 
 if [ $? -eq 1 ];
 then
-  cd deps/crosstool-ng/ && ./bootstrap && ./configure --prefix=$DEST_DIR && make -j `nproc` && make install
-  cd $HERE
+  (cd deps/crosstool-ng/ && ./bootstrap && ./configure --prefix=$DEST_DIR && make -j `nproc` && make install) || exit 1
 
-  ct-ng build
+  ct-ng build || exit 1
   cat build.log
   rm build.log
 fi
+
+OUR_CONTEXT=""
 
 # Clone and build Rust
 
@@ -101,9 +115,10 @@ update_repo rust https://github.com/rust-lang/rust.git fae516277b6da46b6c1cf5687
 
 if [ $? -eq 1 ];
 then
-  cd deps/rust && ./configure --prefix=$DEST_DIR --target=$TARGET && make -j `nproc` && make install
-  cd $HERE
+  (cd deps/rust && ./configure --prefix=$DEST_DIR --target=$TARGET && make -j `nproc` && make install) || exit 1
 fi
+
+OUR_CONTEXT=""
 
 # Clone and build cargo
 
@@ -114,9 +129,10 @@ update_repo cargo https://github.com/rust-lang/cargo.git
 
 if [ $? -eq 1 ];
 then
-  cd deps/cargo && ./configure --prefix=$DEST_DIR && make -j `nproc` && make install
-  cd $HERE
+  (cd deps/cargo && ./configure --prefix=$DEST_DIR && make -j `nproc` && make install) || exit 1
 fi
+
+OUR_CONTEXT=""
 
 # Download additional deb packages and patch the toolchain's sysroot.
 
@@ -209,7 +225,7 @@ export LD_LIBRARY_PATH=$DEST_DIR/lib:$LD_LIBRARY_PATH
 export OPENSSL_LIB_DIR=$SYSROOT/usr/lib/arm-linux-gnueabihf/
 export TARGET_CFLAGS="-I $SYSROOT/usr/include/arm-linux-gnueabihf"
 
-cd test
+pushd test
 cargo build --release --target=$TARGET
 
 if [ $? -eq 0 ];
@@ -219,6 +235,6 @@ then
   echo "=================================================================="
 fi
 
-cd $HERE
+popd
 
 tar czf toolchain.tar.gz $DEST_DIR
