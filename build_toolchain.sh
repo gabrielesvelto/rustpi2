@@ -56,7 +56,7 @@ function update_repo {
   URL=$2
   if [ -d ./deps/$NAME ];
   then
-    (cd ./deps/$NAME && git pull)
+    (cd ./deps/$NAME && git pull --recurse-submodules=yes)
   else
     git clone --recursive $URL deps/$NAME
   fi
@@ -111,7 +111,7 @@ OUR_CONTEXT=""
 
 # Clone and build Rust
 
-update_repo rust https://github.com/rust-lang/rust.git fae516277b6da46b6c1cf568765c90fad2f9ae4b #f5f8e0bfbeee2abc425f26a3ad36430f23010e69 
+update_repo rust https://github.com/rust-lang/rust.git HEAD #fae516277b6da46b6c1cf568765c90fad2f9ae4b #f5f8e0bfbeee2abc425f26a3ad36430f23010e69 
 
 if [ $? -eq 1 ];
 then
