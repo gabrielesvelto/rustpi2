@@ -111,7 +111,7 @@ OUR_CONTEXT=""
 
 # Clone and build Rust
 
-update_repo rust https://github.com/rust-lang/rust.git HEAD #fae516277b6da46b6c1cf568765c90fad2f9ae4b #f5f8e0bfbeee2abc425f26a3ad36430f23010e69 
+update_repo rust https://github.com/rust-lang/rust.git HEAD
 
 if [ $? -eq 1 ];
 then
@@ -140,11 +140,14 @@ get_deb a/avahi libavahi-client-dev_0.6.31-5_armhf
 get_deb a/avahi libavahi-common-dev_0.6.31-5_armhf
 get_deb a/avahi libavahi-common3_0.6.31-5_armhf
 get_deb d/dbus libdbus-1-dev_1.8.20-0+deb8u1_armhf
-get_deb o/openssl libssl-dev_1.0.1k-3+deb8u2_armhf
-get_deb o/openssl libssl1.0.0_1.0.1k-3+deb8u2_armhf
+get_deb o/openssl libssl-dev_1.0.1k-3+deb8u4_armhf
+get_deb o/openssl libssl1.0.0_1.0.1k-3+deb8u4_armhf
 get_deb s/sqlite3 libsqlite3-dev_3.8.7.1-1+deb8u1_armhf
 get_deb z/zlib zlib1g_1.2.8.dfsg-2+b1_armhf
 get_deb z/zlib zlib1g-dev_1.2.8.dfsg-2+b1_armhf
+get_deb libu/libupnp libupnp6-dev_1.6.19+git20141001-1_armhf
+get_deb libu/libupnp libupnp-dev_1.6.19+git20141001-1_all
+get_deb libu/libupnp libupnp6_1.6.19+git20141001-1_armhf
 
 SYSROOT=$DEST_DIR/x-tools/arm-unknown-linux-gnueabihf/sysroot
 chmod u+w $SYSROOT
@@ -168,7 +171,7 @@ chmod u-w $SYSROOT
 
 cat > $DEST_DIR/bin/rustpi-linker <<EOF
 #!/bin/bash
-arm-linux-gnueabihf-gcc --sysroot=$SYSROOT -L $SYSROOT/usr/lib/arm-linux-gnueabihf "\$@"
+arm-linux-gnueabihf-gcc --sysroot=$SYSROOT -L $SYSROOT/usr/lib/arm-linux-gnueabihf -l ixml -l threadutil "\$@"
 EOF
 
 chmod u+x $DEST_DIR/bin/rustpi-linker
@@ -230,6 +233,7 @@ export OPENSSL_LIB_DIR=$SYSROOT/usr/lib/arm-linux-gnueabihf/
 export TARGET_CFLAGS="-I $SYSROOT/usr/include/arm-linux-gnueabihf"
 
 pushd test
+cargo clean
 cargo build --release --target=$TARGET
 
 if [ $? -eq 0 ];
