@@ -43,7 +43,8 @@ unset LD_LIBRARY_PATH
 function get_deb {
   if [ ! -f $HERE/deps/$2.deb ];
   then
-    curl http://archive.raspbian.org/raspbian/pool/main/$1/$2.deb -o $HERE/deps/$2.deb
+    echo "Downloading package from http://archive.raspian.org/raspbian/pool/main/$1/$2.deb"
+    curl https://archive.raspbian.org/raspbian/pool/main/$1/$2.deb -o $HERE/deps/$2.deb
   fi
 
   dpkg-deb -x $HERE/deps/$2.deb $HERE/deps/deb
@@ -111,7 +112,7 @@ OUR_CONTEXT=""
 
 # Clone and build Rust
 
-update_repo rust https://github.com/rust-lang/rust.git HEAD
+update_repo rust https://github.com/rust-lang/rust.git 998a6720b # HEAD
 
 if [ $? -eq 1 ];
 then
@@ -136,18 +137,34 @@ OUR_CONTEXT=""
 
 # Download additional deb packages and patch the toolchain's sysroot.
 
+get_deb a/alsa-lib libasound2_1.0.28-1_armhf
 get_deb a/avahi libavahi-client-dev_0.6.31-5_armhf
 get_deb a/avahi libavahi-common-dev_0.6.31-5_armhf
 get_deb a/avahi libavahi-common3_0.6.31-5_armhf
 get_deb d/dbus libdbus-1-dev_1.8.20-0+deb8u1_armhf
+get_deb e/espeak libespeak-dev_1.48.04+dfsg-1_armhf
+get_deb j/jackd2 libjack-jackd2-0_1.9.10+20140719git3eb0ae6a~dfsg-2_armhf
 get_deb o/openssl libssl-dev_1.0.1k-3+deb8u4_armhf
 get_deb o/openssl libssl1.0.0_1.0.1k-3+deb8u4_armhf
+get_deb p/portaudio19 libportaudio2_19+svn20140130-1_armhf 
+get_deb s/sonic libsonic0_0.1.17-1.1_armhf
 get_deb s/sqlite3 libsqlite3-dev_3.8.7.1-1+deb8u1_armhf
 get_deb z/zlib zlib1g_1.2.8.dfsg-2+b1_armhf
 get_deb z/zlib zlib1g-dev_1.2.8.dfsg-2+b1_armhf
 get_deb libu/libupnp libupnp6-dev_1.6.19+git20141001-1_armhf
 get_deb libu/libupnp libupnp-dev_1.6.19+git20141001-1_all
 get_deb libu/libupnp libupnp6_1.6.19+git20141001-1_armhf
+
+DEB_LIBS=deps/deb/usr/lib/arm-linux-gnueabihf
+
+# Hack to get libespeak dependencies available.
+cp $DEB_LIBS/libsonic.so.0 $DEB_LIBS/libsonic.so
+cp $DEB_LIBS/libportaudio.so.2.0.0 $DEB_LIBS/libportaudio.so
+cp $DEB_LIBS/libjack.so.0.1.0 $DEB_LIBS/libjack.so
+cp $DEB_LIBS/libasound.so.2.0.0 $DEB_LIBS/libasound.so
+
+# We build libopenzwave ourselves and put the .so with the packaged libraries.
+curl https://people.mozilla.org/~fdesre/link-packages/libopenzwave.so > deps/deb/lib/arm-linux-gnueabihf/libopenzwave.so
 
 SYSROOT=$DEST_DIR/x-tools/arm-unknown-linux-gnueabihf/sysroot
 chmod u+w $SYSROOT
@@ -171,7 +188,7 @@ chmod u-w $SYSROOT
 
 cat > $DEST_DIR/bin/rustpi-linker <<EOF
 #!/bin/bash
-arm-linux-gnueabihf-gcc --sysroot=$SYSROOT -L $SYSROOT/usr/lib/arm-linux-gnueabihf -l ixml -l threadutil "\$@"
+arm-linux-gnueabihf-gcc --sysroot=$SYSROOT -L $SYSROOT/usr/lib/arm-linux-gnueabihf -l ixml -l threadutil -l sonic -l portaudio -l jack -l asound "\$@"
 EOF
 
 chmod u+x $DEST_DIR/bin/rustpi-linker
