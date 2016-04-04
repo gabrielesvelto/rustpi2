@@ -1,5 +1,63 @@
 #!/bin/bash
 
+###############################################################################
+# Option variables
+
+opt_path=""
+opt_rust_only=no
+opt_help=no
+
+###############################################################################
+# Print the help message
+
+print_help() {
+    printf "Usage: `basename $0` [OPTION...] dest_dir
+
+Application options:
+  -r, --rust-only       Only rebuilds the rust cross-compiler
+
+Help options:
+  -h, --help            Show this help message
+"
+}
+
+suggest_help() {
+    printf "Try \``basename $0` --help' for more information\n"
+}
+
+###############################################################################
+# Parse the program arguments
+
+parse_args() {
+    # Set the options variables depending on the passed arguments
+    while [ $# -gt 0 ]; do
+        if [ `expr "$1" : "^-"` -eq 1 ]; then
+            if [ $1 = "-r" ] || [ $1 = "--rust-only" ]; then
+                shift
+                opt_rust_only=yes
+            elif [ $1 = "-h" ] || [ $1 = "--help" ]; then
+                opt_help=yes
+                shift 1
+            else
+                printf "error: Unknown option $1\n"
+                suggest_help
+                exit 1
+            fi
+        else
+            # No more arguments, the following parameters will be paths
+            break
+        fi
+    done
+
+    if [ $# -eq 0 ] && [ $opt_help != yes ]; then
+        printf "error: no destination directory specified\n"
+        suggest_help
+        exit 1
+    fi
+
+    opt_path="$1"
+}
+
 OUR_CONTEXT=""
 
 function cleanup {
@@ -25,15 +83,15 @@ function check_programs {
   done
 }
 
-check_programs
-
 # Builds a full cross compiling toolchain for Rust armv7 targets like the
 # Raspberry Pi 2, with support for programs using openssl.
 
-if [ $# -ne 1 ];
-then
-  echo "Usage: $0 dest_dir"
-  exit
+parse_args "$@"
+check_programs
+
+if [ $opt_help = yes ] || [ $# -eq 0 ]; then
+    print_help
+    exit 0
 fi
 
 # Make crosstool-NG happy
@@ -85,7 +143,7 @@ function update_repo {
   fi
 }
 
-export DEST_DIR=$1
+export DEST_DIR="$opt_path"
 HERE=`pwd`
 
 mkdir -p deps/deb
@@ -97,15 +155,17 @@ TARGET=armv7-unknown-linux-gnueabihf
 
 # Clone and build crosstool-ng
 
-update_repo crosstool-ng https://github.com/crosstool-ng/crosstool-ng.git HEAD
+if [ $opt_rust_only != yes ]; then
+  update_repo crosstool-ng https://github.com/crosstool-ng/crosstool-ng.git HEAD
 
-if [ $? -eq 1 ];
-then
-  (cd deps/crosstool-ng/ && ./bootstrap && ./configure --prefix=$DEST_DIR && make -j `nproc` && make install) || exit 1
+  if [ $? -eq 1 ];
+  then
+    (cd deps/crosstool-ng/ && ./bootstrap && ./configure --prefix=$DEST_DIR && make -j `nproc` && make install) || exit 1
 
-  ct-ng build || exit 1
-  cat build.log
-  rm build.log
+    ct-ng build || exit 1
+    cat build.log
+    rm build.log
+  fi
 fi
 
 OUR_CONTEXT=""
